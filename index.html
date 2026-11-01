@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>U.S. Drug Overdose Deaths - Interactive Explorer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>The Shifting Geography and Drugs of the U.S. Overdose Crisis</h1>
+      <p class="subtitle">
+        CDC VSRR Provisional Drug Overdose Death Counts - 12-month-ending totals
+        by state, 2015-2026. Drag the slider through time, switch the drug
+        category, and click a state to trace its trajectory.
+      </p>
+    </header>
+
+    <main>
+      <section class="controls">
+        <label for="indicator">Drug category
+          <select id="indicator"></select>
+        </label>
+        <label for="period" class="slider-label">
+          <span id="period-label"></span>
+          <input type="range" id="period" min="0" value="0" step="1" />
+        </label>
+      </section>
+
+      <section class="viz">
+        <figure class="map-figure">
+          <svg id="map" viewBox="0 0 975 610" aria-label="U.S. choropleth of overdose deaths"></svg>
+          <div id="legend"></div>
+        </figure>
+        <figure class="trend-figure">
+          <figcaption id="trend-title">Click a state to see its trend over time</figcaption>
+          <svg id="trend" viewBox="0 0 520 300" aria-label="Selected-state time series"></svg>
+        </figure>
+      </section>
+
+      <div id="tooltip" class="tooltip" hidden></div>
+
+      <section class="writeup">
+        <h2>About this visualization</h2>
+        <div id="writeup-body">
+          <p><em>Write-up coming soon.</em></p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
