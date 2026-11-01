@@ -18,6 +18,7 @@ body {
 
 header h1 { font-size: 1.9rem; line-height: 1.15; margin-bottom: 0.2em; }
 .subtitle { color: var(--muted); max-width: 70ch; margin-top: 0; }
+.data-note { color: var(--muted); font-size: 0.85rem; max-width: 80ch; margin: 0.5em 0 0; }
 
 .controls {
   display: flex;
