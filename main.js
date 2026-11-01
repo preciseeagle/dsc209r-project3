@@ -4,10 +4,10 @@ import * as topojson from "https://cdn.jsdelivr.net/npm/topojson-client@3/+esm";
 // Load the overdose data (static file) and the US states geometry (CDN).
 const [data, us] = await Promise.all([
   d3.json("data.json"),
-  d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json"),
+  d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-albers-10m.json"),
 ]);
 
-// us-atlas states-10m is pre-projected to a 975x610 viewport, so geoPath needs
+// us-atlas states-albers-10m is pre-projected to a 975x610 viewport, so geoPath needs
 // no projection and features carry properties.name (full state name).
 const stateFeatures = topojson.feature(us, us.objects.states).features;
 const stateBorders = topojson.mesh(us, us.objects.states, (a, b) => a !== b);
