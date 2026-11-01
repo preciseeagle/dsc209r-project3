@@ -1,0 +1,35 @@
+CDC VSRR Provisional Drug Overdose Death Counts - Data Exploration
+======================================================================
+
+Total rows: 87543
+
+DISTINCT INDICATORS (12):
+  - Cocaine (T40.5)
+  - Heroin (T40.1)
+  - Methadone (T40.3)
+  - Natural & semi-synthetic opioids (T40.2)
+  - Natural & semi-synthetic opioids, incl. methadone (T40.2, T40.3)
+  - Natural, semi-synthetic, & synthetic opioids, incl. methadone (T40.2-T40.4)
+  - Number of Deaths
+  - Number of Drug Overdose Deaths
+  - Opioids (T40.0-T40.4,T40.6)
+  - Percent with drugs specified
+  - Psychostimulants with abuse potential (T43.6)
+  - Synthetic opioids, excl. methadone (T40.4)
+
+NATIONAL LABEL (exact):
+  United States
+
+DISTINCT STATES/TERRITORIES: 54
+  AK, AL, AR, AZ, CA, CO, CT, DC, DE, FL, GA, HI, IA, ID, IL, IN, KS, KY, LA, MA, MD, ME, MI, MN, MO, MS, MT, NC, ND, NE, NH, NJ, NM, NV, NY, OH, OK, OR, PA, PR, RI, SC, SD, TN, TX, US, UT, VA, VT, WA, WI, WV, WY, YC
+
+DISTINCT PERIODS:
+  - 12 month-ending
+
+YEAR RANGE: 2015 to 2026
+
+DATA CAVEATS:
+  - Many early data_value entries are empty (low data quality)
+  - Predicted values exist for some indicators/periods
+  - State ranking uses most recent period only
+  - True choropleth requires geo files (not built here)
