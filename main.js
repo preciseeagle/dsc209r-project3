@@ -16,7 +16,7 @@ const geoPath = d3.geoPath();
 const indicatorKeys = Object.keys(data.indicatorLabels);
 let indicator = "total";
 let periodIdx = data.periods.length - 1;
-let selectedState = null;
+let selectedState = "California";
 let color;
 
 // ---- Controls ----
