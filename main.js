@@ -15,6 +15,7 @@ const geoPath = d3.geoPath();
 
 const indicatorKeys = Object.keys(data.indicatorLabels);
 let indicator = "total";
+let metric = "counts"; // "counts" = raw deaths; "rate" = deaths per 100k residents
 let periodIdx = data.periods.length - 1;
 let selectedState = "California";
 let color;
@@ -35,6 +36,18 @@ indicatorSelect
     render();
   });
 
+// Metric toggle: raw counts mostly track state population (big states always
+// darkest), so per-100k rates are the fairer cross-state comparison. Both
+// datasets share data.json's shape, so switching is just a dataset swap.
+const metricSelect = d3.select("#metric");
+metricSelect
+  .property("value", metric)
+  .on("change", (event) => {
+    metric = event.target.value;
+    recomputeColor();
+    render();
+  });
+
 const periodSlider = d3
   .select("#period")
   .attr("max", data.periods.length - 1)
@@ -44,11 +57,21 @@ const periodSlider = d3
     render();
   });
 
-// Fixed color domain per indicator (over all states & periods) so sliding
-// through time reads as a real change in magnitude, not a rescaled palette.
+// The active dataset follows the metric toggle; data.rate mirrors data.series.
+function activeData() {
+  return metric === "rate" ? data.rate : data.series;
+}
+// Per-metric number formatting and labels used by the tooltip, legend, and trend.
+const METRIC = {
+  counts: { value: d3.format(","), tick: d3.format("~s"), unit: "deaths", legend: "deaths" },
+  rate: { value: d3.format(".1f"), tick: d3.format("~s"), unit: "per 100k", legend: "deaths per 100k" },
+};
+
+// Fixed color domain per indicator and metric (over all states & periods) so
+// sliding through time reads as a real change in magnitude, not a rescaled palette.
 function recomputeColor() {
   let max = 0;
-  const series = data.series[indicator];
+  const series = activeData()[indicator];
   for (const st in series) {
     for (const v of series[st]) if (v != null && v > max) max = v;
   }
@@ -57,7 +80,7 @@ function recomputeColor() {
 recomputeColor();
 
 function valueFor(name, idx = periodIdx) {
-  const s = data.series[indicator][name];
+  const s = activeData()[indicator][name];
   return s ? s[idx] : null;
 }
 
@@ -87,7 +110,7 @@ function showTooltip(event, name) {
     .style("left", `${event.clientX + 14}px`)
     .style("top", `${event.clientY + 14}px`)
     .html(
-      `<strong>${name}</strong><br>${v == null ? "no data" : d3.format(",")(v) + " deaths"}` +
+      `<strong>${name}</strong><br>${v == null ? "no data" : METRIC[metric].value(v) + " " + METRIC[metric].unit}` +
         `<br><span class="tt-sub">${data.periodLabels[periodIdx]}</span>`,
     );
 }
@@ -121,13 +144,13 @@ function renderLegend() {
   svg
     .append("g")
     .attr("transform", `translate(0,${h})`)
-    .call(d3.axisBottom(scale).ticks(5).tickFormat(d3.format("~s")))
+    .call(d3.axisBottom(scale).ticks(5).tickFormat(METRIC[metric].tick))
     .call((g) => g.select(".domain").remove());
   svg
     .append("text")
     .attr("y", h + 30)
     .attr("class", "legend-title")
-    .text(`${data.indicatorLabels[indicator]} - deaths (12-mo ending)`);
+    .text(`${data.indicatorLabels[indicator]} - ${METRIC[metric].legend} (12-mo ending)`);
 }
 
 // ---- Trend (linked view: selected state over time) ----
@@ -139,8 +162,8 @@ function renderTrend() {
     trendTitle.text("Click a state to see its trend over time");
     return;
   }
-  trendTitle.text(`${selectedState} - ${data.indicatorLabels[indicator]}`);
-  const series = data.series[indicator][selectedState] || [];
+  trendTitle.text(`${selectedState} - ${data.indicatorLabels[indicator]}${metric === "rate" ? " (per 100k)" : ""}`);
+  const series = activeData()[indicator][selectedState] || [];
   const pts = series.map((v, i) => ({ i, v })).filter((d) => d.v != null);
   if (!pts.length) return;
 
@@ -171,7 +194,7 @@ function renderTrend() {
   trendSvg
     .append("g")
     .attr("transform", `translate(${m.left},0)`)
-    .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format("~s")));
+    .call(d3.axisLeft(y).ticks(5).tickFormat(METRIC[metric].tick));
 
   const line = d3.line().x((d) => x(d.i)).y((d) => y(d.v));
   trendSvg.append("path").datum(pts).attr("class", "trend-line").attr("d", line);
