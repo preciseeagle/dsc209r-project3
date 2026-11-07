@@ -107,12 +107,15 @@ function showTooltip(event, name) {
   const v = valueFor(name);
   tooltip
     .attr("hidden", null)
-    .style("left", `${event.clientX + 14}px`)
-    .style("top", `${event.clientY + 14}px`)
     .html(
       `<strong>${name}</strong><br>${v == null ? "no data" : METRIC[metric].value(v) + " " + METRIC[metric].unit}` +
         `<br><span class="tt-sub">${data.periodLabels[periodIdx]}</span>`,
     );
+  // Flip to the cursor's other side when the tooltip would leave the viewport.
+  const { offsetWidth: tw, offsetHeight: th } = tooltip.node();
+  const left = event.clientX + 14 + tw > innerWidth ? event.clientX - 14 - tw : event.clientX + 14;
+  const top = event.clientY + 14 + th > innerHeight ? event.clientY - 14 - th : event.clientY + 14;
+  tooltip.style("left", `${Math.max(0, left)}px`).style("top", `${Math.max(0, top)}px`);
 }
 function hideTooltip() {
   tooltip.attr("hidden", true);
@@ -163,24 +166,31 @@ function renderTrend() {
     return;
   }
   trendTitle.text(`${selectedState} - ${data.indicatorLabels[indicator]}${metric === "rate" ? " (per 100k)" : ""}`);
+  trendTitle.append("span").attr("class", "trend-hint").text("Click the state again to clear.");
   const series = activeData()[indicator][selectedState] || [];
   const pts = series.map((v, i) => ({ i, v })).filter((d) => d.v != null);
   if (!pts.length) return;
 
+  // National per-100k reference, rate mode only (national counts would flatten a single state).
+  const natPts =
+    metric === "rate"
+      ? data.nationalRate[indicator].map((v, i) => ({ i, v })).filter((d) => d.v != null)
+      : [];
+
   const W = 520,
     H = 300,
-    m = { top: 16, right: 16, bottom: 28, left: 54 };
+    m = { top: 16, right: 30, bottom: 28, left: 54 };
   const x = d3.scaleLinear().domain([0, data.periods.length - 1]).range([m.left, W - m.right]);
   const y = d3
     .scaleLinear()
-    .domain([0, d3.max(pts, (d) => d.v) || 1])
+    .domain([0, d3.max(natPts.concat(pts), (d) => d.v) || 1])
     .nice()
     .range([H - m.bottom, m.top]);
 
-  // One tick per year (December period, plus the first point).
+  // One tick per year (December period).
   const yearTicks = [];
   data.periods.forEach((p, i) => {
-    if (i === 0 || p.slice(5) === "12") yearTicks.push({ i, yr: p.slice(0, 4) });
+    if (p.slice(5) === "12") yearTicks.push({ i, yr: p.slice(0, 4) });
   });
   trendSvg
     .append("g")
@@ -196,16 +206,36 @@ function renderTrend() {
     .attr("transform", `translate(${m.left},0)`)
     .call(d3.axisLeft(y).ticks(5).tickFormat(METRIC[metric].tick));
 
+  trendSvg
+    .append("text")
+    .attr("class", "axis-label")
+    .attr("transform", `translate(12,${(m.top + H - m.bottom) / 2}) rotate(-90)`)
+    .attr("text-anchor", "middle")
+    .text(metric === "rate" ? "deaths per 100k" : "deaths");
+
   const line = d3.line().x((d) => x(d.i)).y((d) => y(d.v));
+  if (natPts.length) {
+    const end = natPts[natPts.length - 1];
+    trendSvg.append("path").datum(natPts).attr("class", "national-line").attr("d", line);
+    trendSvg
+      .append("text")
+      .attr("class", "axis-label")
+      .attr("x", x(end.i) + 3)
+      .attr("y", y(end.v))
+      .attr("dy", "0.32em")
+      .text("U.S.");
+  }
   trendSvg.append("path").datum(pts).attr("class", "trend-line").attr("d", line);
 
-  const cur = pts.find((d) => d.i === periodIdx) || pts[pts.length - 1];
-  trendSvg
-    .append("circle")
-    .attr("class", "trend-marker")
-    .attr("cx", x(cur.i))
-    .attr("cy", y(cur.v))
-    .attr("r", 4);
+  // No marker when the slider period has no value for this state.
+  const cur = pts.find((d) => d.i === periodIdx);
+  if (cur)
+    trendSvg
+      .append("circle")
+      .attr("class", "trend-marker")
+      .attr("cx", x(cur.i))
+      .attr("cy", y(cur.v))
+      .attr("r", 4);
 }
 
 // ---- Render everything from current state ----
